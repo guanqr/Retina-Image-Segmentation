@@ -5,9 +5,9 @@ I0 = imread('3.tif');
 [m,n] = size(I0);
 I1 = medfilt2(I0,[5, 5]); %中值滤波
 I1 = imadjust(I1,[],[],1.5);
-I2 = graythresh(I1);    %大津法全局阈值调整
-I3 = imbinarize(I1, I2+0.17); %二值化
-I4 = edge(I3,'canny'); 
+thresh = graythresh(I1);    %大津法全局阈值调整
+I2 = imbinarize(I1, thresh+0.17); %二值化
+I3 = edge(I2,'canny'); 
 
 %边界特征提取
 for j = 1:n
@@ -16,11 +16,11 @@ end
 
 for i = m:-1:1
     for j = 1:n
-        if(I4(i, j) == 1)
+        if(I3(i, j) == 1)
             if(i > ymin(j))
                 ymin(j) = i;
             else
-                I4(i,j)=0;
+                I3(i,j)=0;
             end
         end
     end
@@ -31,20 +31,20 @@ B1 = [0 0 0
       1 1 1
       0 0 0];
 for i = 1:6
-    I4 = imdilate(I4, B1);
+    I3 = imdilate(I3, B1);
 end
 B2 = [0 1 0
       1 1 1
       0 1 0];
 for i = 1:4
-    I4 = imdilate(I4, B2);
+    I3 = imdilate(I3, B2);
 end
 
-imLabel = bwlabel(I4);                %对各连通域进行标记
+imLabel = bwlabel(I3);                %对各连通域进行标记
 stats = regionprops(imLabel,'Area');    %求各连通域的大小
 area = cat(1,stats.Area);
 index = find(area == max(area));        %求最大连通域的索引
-I4 = ismember(imLabel,index);          %获取最大连通域图像
+I3 = ismember(imLabel,index);          %获取最大连通域图像
 
 %提取下边界特征
 for j = 1:n
@@ -53,11 +53,11 @@ end
 
 for i = m:-1:1
     for j = 1:n
-        if(I4(i, j) == 1)
+        if(I3(i, j) == 1)
             if(i > ymin(j))
                 ymin(j) = i;
             else
-                I4(i,j)=0;
+                I3(i,j)=0;
             end
         end
     end
@@ -66,7 +66,7 @@ end
 k = 1;
 for i = 1:m
     for j = n:-1:1
-        if(I4(i,j) == 1)
+        if(I3(i,j) == 1)
             if(i == ymin(j))
                 yV(k) = i;
                 xV(k) = j;
