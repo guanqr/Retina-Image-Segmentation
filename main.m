@@ -1,10 +1,13 @@
 clear;
-I0 = imread('12.tif');
+I0 = imread('1.tif');
 
-%Vitreous提取
+%*****************************************%
+%               Vitreous提取
+%*****************************************%
+
 [m,n] = size(I0);
 I1 = medfilt2(I0,[5, 5]); %中值滤波
-thresh = graythresh(I1);    %大津法全局阈值调整
+thresh = graythresh(I1); %大津法全局阈值调整
 I2 = imbinarize(I1, thresh); %二值化
 I3 = edge(I2,'canny'); %边缘提取
 
@@ -134,7 +137,10 @@ xxN = linspace(1, n);
 yyN = spline(xN, y1N, xxN);
 N = plot(xxN, yyN, '-', 'LineWidth', 1, 'color', 'g');%线性拟合绘制
 
-%GCL提取
+%*****************************************%
+%                 GCL提取
+%*****************************************%
+
 [m,n] = size(I0);
 I1 = medfilt2(I0,[5, 5]); %中值滤波
 thresh = graythresh(I1);    %大津法全局阈值调整
@@ -264,8 +270,6 @@ for i = m:-1:1
     end
 end
 
-% I4 = edge(I3,'canny'); %边缘提取
-%imshow(I3);
 k = 1;
 for i = 1:m
     for j = 1:n
@@ -279,13 +283,16 @@ for i = 1:m
     end
 end
 
-pG = polyfit(xG, yG, 6);
+pG = polyfit(xG, yG, 8);
 y1G = polyval(pG, xG);
 xxG = linspace(1, n);
 yyG = spline(xG, y1G, xxG);
 G = plot(xxG, yyG, '-', 'LineWidth', 1, 'color', 'y');%线性拟合绘制
 
-%OPL提取
+%*****************************************%
+%                 OPL提取
+%*****************************************%
+
 [m,n] = size(I0);
 I1 = medfilt2(I0,[5, 5]); %中值滤波
 thresh = graythresh(I1);    %大津法全局阈值调整
@@ -377,7 +384,10 @@ xxOP = linspace(1, n);
 yyOP = spline(xOP, y1OP, xxOP);
 OP = plot(xxOP, yyOP, '-', 'LineWidth', 1, 'color', 'c');%线性拟合绘制
 
-%ONL提取
+%*****************************************%
+%                 ONL提取
+%*****************************************%
+
 [m,n] = size(I0);
 I1 = medfilt2(I0,[5, 5]); %中值滤波
 thresh = graythresh(I1);    %大津法全局阈值调整
@@ -459,7 +469,92 @@ xxON = linspace(1, n, 300);
 yyON = spline(xON, y1ON, xxON);
 ON=plot(xxON, yyON, '--', 'LineWidth', 1, 'color', 'b');
 
-%RPE提取
+%*****************************************%
+%                 OS提取
+%*****************************************%
+
+[m,n] = size(I0);
+I1=histeq(I0); 
+thresh = graythresh(I1); %大津法全局阈值调整
+I2 = imbinarize(I1, thresh+0.47); %二值化
+I2 = medfilt2(I2,[6,6]); %中值滤波
+
+for j = 1:n
+    for i = m:-1:1
+        if(I2(i, j) == 1)
+            for k = i-10:-1:1
+                I2(k, j) = 0;
+            end
+        end
+    end
+end
+
+%确定第一个点
+for i = 1:m
+    for j = 1:n
+     if(I2(i,j)==1 && i>k)
+         k=i;
+     end
+    end
+end
+
+%去除上方多余的点
+for j = 1:n
+    for i = k-70:-1:1
+        I2(i, j) = 0;
+    end
+end
+
+I3 = edge(I2,'canny'); 
+
+B1 = [0 1 0
+      1 1 1
+      0 1 0];
+for i = 1:1
+    I3 = imdilate(I3, B1);
+end
+
+%边界特征提取
+for j = 1:n
+    ymin(j) = m;
+end
+
+for i = 1:m
+    for j = 1:n
+        if(I3(i, j) == 1)
+            if(i < ymin(j))
+                ymin(j) = i;
+            else
+                I3(i,j)=0;
+            end
+        end
+    end
+end
+
+k = 1;
+for i = 1:m
+    for j = 1:n
+        if(I3(i,j) == 1)
+            if(i == ymin(j))
+                yOS(k) = i;
+                xOS(k) = j;
+                k = k + 1;
+            end
+        end
+    end
+end
+
+%绘制边界
+pOS = polyfit(xOS, yOS, 10);
+y1OS = polyval(pOS, xOS);
+xxOS = linspace(1, n, 300);
+yyOS = spline(xOS, y1OS, xxOS);
+OS = plot(xxOS, yyOS, '--', 'LineWidth', 1, 'color', 'y');
+
+%*****************************************%
+%                 RPE提取
+%*****************************************%
+
 [m,n] = size(I0);
 I1 = medfilt2(I0,[5, 5]); %中值滤波
 I1 = imadjust(I1,[],[],1.5);
@@ -536,7 +631,7 @@ end
 pR = polyfit(xR, yR, 10);
 y1R = polyval(pR, xR);
 xxR = linspace(1, n, 300);
-yyR = spline(xR, y1R, xxR);
-R=plot(xxR, yyR-4, '--', 'LineWidth', 1, 'color', 'm');
+yyR = spline(xR, y1R, xxR)-4;
+R = plot(xxR, yyR, '--', 'LineWidth', 1, 'color', 'm');
 
-legend([V,N,G,OP,ON,R],'Vitreous','NFL','GCL','OPL','ONL','RPE');
+legend([V, N, G, OP, ON, OS, R], 'Vitreous', 'NFL', 'GCL', 'OPL', 'ONL', 'OS', 'RPE');

@@ -1,10 +1,10 @@
 clear;
-I0 = imread('3.tif');
+I0 = imread('6.tif');
 
 %RPE提取
 [m,n] = size(I0);
 I1 = medfilt2(I0,[5, 5]); %中值滤波
-I1 = imadjust(I1,[],[],1.5);
+I1 = imadjust(I1,[],[],1.5); %伽马变换
 thresh = graythresh(I1);    %大津法全局阈值调整
 I2 = imbinarize(I1, thresh+0.17); %二值化
 I3 = edge(I2,'canny'); 
@@ -83,6 +83,6 @@ hold on;
 pV = polyfit(xV, yV, 10);
 y1V = polyval(pV, xV);
 xxV = linspace(1, n, 300);
-yyV = spline(xV, y1V, xxV);
-plot(xxV, yyV-4, '-', 'LineWidth', 1, 'color', 'b');
-legend('Vitreous');
+yyV = spline(xV, y1V, xxV)-4;
+plot(xxV, yyV, '-', 'LineWidth', 1, 'color', 'm');
+legend('RPE');
