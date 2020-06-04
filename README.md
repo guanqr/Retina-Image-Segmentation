@@ -9,3 +9,5 @@
 整体效果如下图所示。
 
 ![](https://raw.githubusercontent.com/guanqr/Retina-Image-Segmentation/master/docs/oct-2.png)
+
+*注：本程序为浙江大学光电学院《机器视觉与图像处理》课程设计内容，代码仅供个人参考，请勿抄袭。*
